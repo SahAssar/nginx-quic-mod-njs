@@ -1,0 +1,54 @@
+# Maintainer: Massimiliano Torromeo <massimiliano.torromeo@gmail.com>
+
+pkgname=nginx-quic-mod-njs
+pkgver=0.7.9
+pkgrel=1
+
+_modname="${pkgname#nginx-quic-mod-}"
+
+pkgdesc='nginScript module for nginx'
+arch=('x86_64')
+depends=('nginx')
+makedepends=('nginx-quic-src')
+url="https://nginx.org/en/docs/njs_about.html"
+license=('CUSTOM')
+
+source=(njs-$pkgver.tar.gz::https://hg.nginx.org/njs/archive/$pkgver.tar.gz)
+sha256sums=('a97565c61a70ea65ea24aad232ca6b7a8fa1378c61501bd9cc7bdf9a64fc46c4')
+
+prepare() {
+  mkdir -p build
+  cd build
+  ln -sf /usr/src/nginx/auto
+  ln -sf /usr/src/nginx/src
+}
+
+build() {
+  cd "$srcdir/njs-$pkgver"
+  CFLAGS="$CFLAGS -Wno-dangling-pointer" ./configure
+  make njs
+
+  # next configure cleans the build directory
+  mv build/njs ../build/
+
+  cd "$srcdir/build"
+  /usr/src/nginx/configure \
+    --with-compat \
+    --with-stream \
+    --with-http_ssl_module \
+    --with-http_v2_module \
+    --add-dynamic-module=../njs-$pkgver/nginx
+  make modules
+}
+
+package() {
+  install -Dm644 "$srcdir"/njs-$pkgver/LICENSE \
+              "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+
+  install -Dm755 build/njs "$pkgdir"/usr/bin/njs
+
+  cd build/objs
+  for mod in *.so; do
+      install -Dm755 $mod "$pkgdir"/usr/lib/nginx/modules/$mod
+  done
+}

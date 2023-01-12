@@ -5,10 +5,6 @@ pkgver=0.7.9
 pkgrel=1
 
 _modname="${pkgname#nginx-quic-mod-}"
-if [[ $CC=="clang" ]];then
-    _cc_opt="-flto"
-    _ld_opt="-flto -fuse-ld=lld"
-fi
 
 pkgdesc='nginScript module for nginx'
 arch=('x86_64')
@@ -41,7 +37,7 @@ build() {
     --with-stream \
     --with-http_ssl_module \
     --with-http_v2_module \
-    --add-dynamic-module=../njs-$pkgver/nginx --with-cc-opt="$_cc_opt" --with-ld-opt="$_ld_opt"
+    --add-dynamic-module=../njs-$pkgver/nginx
   make modules
 }
 
